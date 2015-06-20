@@ -6,7 +6,6 @@ import java.util.Map;
 
 
 import ec.EvolutionState;
-import ec.Individual;
 import ec.Problem;
 import ec.cgp.Evaluator;
 import ec.simple.SimpleProblemForm;
@@ -40,13 +39,6 @@ public abstract class ProblemCGP extends Problem implements SimpleProblemForm {
 	static String P_CONSTANTS = "constants";
 	static String P_CONSTANT_MIN = "constant-min";
 	static String P_CONSTANT_MAX = "constant-max";
-
-	/**
-	 * Currently does nothing except enforce the SimpleProblemForm contract.
-	 */
-	public void describe(Individual ind, EvolutionState state,
-			int subpopulation, int threadnum, int log, int verbosity) {
-	}
 
 	/**
 	 * Initialize the evaluation cache, and configure the random constants.

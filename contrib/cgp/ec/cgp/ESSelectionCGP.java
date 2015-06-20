@@ -48,7 +48,7 @@ public class ESSelectionCGP extends ESSelection {
 		 * random.
 		 */
 		if (pos == 0) { /* only do this for the first parent. */
-			float fit = inds2[parent].fitness.fitness();
+			double fit = inds2[parent].fitness.fitness();
 			int x = 0;
 			while (fit == inds2[parent + x].fitness.fitness()
 					&& parent + x < inds.length)
