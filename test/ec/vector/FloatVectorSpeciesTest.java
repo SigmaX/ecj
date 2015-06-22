@@ -74,10 +74,11 @@ public class FloatVectorSpeciesTest {
         final FloatVectorSpecies instance = new FloatVectorSpecies();
         instance.setup(state, BASE);
         
+        assertTrue(instance.repOK());
         assertEquals(NUM_GENES, instance.genomeSize);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(0), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(1), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(2), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(0)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(1)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(2)).stdev(), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(0), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(1), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(2), 0.000001);
@@ -85,9 +86,10 @@ public class FloatVectorSpeciesTest {
         assertEquals(DEFAULT_MAX, instance.maxGene(1), 0.000001);
         assertEquals(DEFAULT_MAX, instance.maxGene(2), 0.000001);
         // Mutation bounding defaults to true
-        assertTrue(instance.mutationIsBounded(0));
-        assertTrue(instance.mutationIsBounded(1));
-        assertTrue(instance.mutationIsBounded(2));
+        assertTrue(instance.mutator(0).mutationIsBounded());
+        assertTrue(instance.mutator(1).mutationIsBounded());
+        assertTrue(instance.mutator(2).mutationIsBounded());
+        assertTrue(instance.repOK());
     }
 
     @Test
@@ -97,19 +99,21 @@ public class FloatVectorSpeciesTest {
         state.parameters.set(BASE.push(FloatVectorSpecies.P_MUTATION_BOUNDED), "false");
         instance.setup(state, BASE);
         
+        assertTrue(instance.repOK());
         assertEquals(NUM_GENES, instance.genomeSize);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(0), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(1), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(2), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(0)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(1)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(2)).stdev(), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(0), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(1), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(2), 0.000001);
         assertEquals(DEFAULT_MAX, instance.maxGene(0), 0.000001);
         assertEquals(DEFAULT_MAX, instance.maxGene(1), 0.000001);
         assertEquals(DEFAULT_MAX, instance.maxGene(2), 0.000001);
-        assertFalse(instance.mutationIsBounded(0));
-        assertFalse(instance.mutationIsBounded(1));
-        assertFalse(instance.mutationIsBounded(2));
+        assertFalse(instance.mutator(0).mutationIsBounded());
+        assertFalse(instance.mutator(1).mutationIsBounded());
+        assertFalse(instance.mutator(2).mutationIsBounded());
+        assertTrue(instance.repOK());
     }
     
     @Test
@@ -122,19 +126,21 @@ public class FloatVectorSpeciesTest {
         state.parameters.set(BASE.push(FloatVectorSpecies.P_MAXGENE).push("1"), ""+max1);
         instance.setup(state, BASE);
 
+        assertTrue(instance.repOK());
         assertEquals(NUM_GENES, instance.genomeSize);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(0), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(1), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(2), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(0)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(1)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(2)).stdev(), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(0), 0.000001);
         assertEquals(min1, instance.minGene(1), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(2), 0.000001);
         assertEquals(DEFAULT_MAX, instance.maxGene(0), 0.000001);
         assertEquals(max1, instance.maxGene(1), 0.000001);
         assertEquals(DEFAULT_MAX, instance.maxGene(2), 0.000001);
-        assertTrue(instance.mutationIsBounded(0));
-        assertTrue(instance.mutationIsBounded(1));
-        assertTrue(instance.mutationIsBounded(2));
+        assertTrue(instance.mutator(0).mutationIsBounded());
+        assertTrue(instance.mutator(1).mutationIsBounded());
+        assertTrue(instance.mutator(2).mutationIsBounded());
+        assertTrue(instance.repOK());
     }
     
     @Test
@@ -148,19 +154,21 @@ public class FloatVectorSpeciesTest {
         state.parameters.set(BASE.push(FloatVectorSpecies.P_MUTATION_BOUNDED).push("1"), "false");
         instance.setup(state, BASE);
 
+        assertTrue(instance.repOK());
         assertEquals(NUM_GENES, instance.genomeSize);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(0), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(1), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(2), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(0)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(1)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(2)).stdev(), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(0), 0.000001);
         assertEquals(min1, instance.minGene(1), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(2), 0.000001);
         assertEquals(DEFAULT_MAX, instance.maxGene(0), 0.000001);
         assertEquals(max1, instance.maxGene(1), 0.000001);
         assertEquals(DEFAULT_MAX, instance.maxGene(2), 0.000001);
-        assertTrue(instance.mutationIsBounded(0));
-        assertFalse(instance.mutationIsBounded(1));
-        assertTrue(instance.mutationIsBounded(2));
+        assertTrue(instance.mutator(0).mutationIsBounded());
+        assertFalse(instance.mutator(1).mutationIsBounded());
+        assertTrue(instance.mutator(2).mutationIsBounded());
+        assertTrue(instance.repOK());
     }
     
     @Test
@@ -178,21 +186,22 @@ public class FloatVectorSpeciesTest {
         state.parameters.set(BASE.push(FloatVectorSpecies.P_SEGMENT).push("1").push(FloatVectorSpecies.P_MINGENE), ""+min1);
         state.parameters.set(BASE.push(FloatVectorSpecies.P_SEGMENT).push("1").push(FloatVectorSpecies.P_MAXGENE), ""+max1);
         instance.setup(state, BASE);
-        
 
+        assertTrue(instance.repOK());
         assertEquals(NUM_GENES, instance.genomeSize);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(0), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(1), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(2), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(0)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(1)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(2)).stdev(), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(0), 0.000001);
         assertEquals(min1, instance.minGene(1), 0.000001);
         assertEquals(min1, instance.minGene(2), 0.000001);
         assertEquals(DEFAULT_MAX, instance.maxGene(0), 0.000001);
         assertEquals(max1, instance.maxGene(1), 0.000001);
         assertEquals(max1, instance.maxGene(2), 0.000001);
-        assertTrue(instance.mutationIsBounded(0));
-        assertTrue(instance.mutationIsBounded(1));
-        assertTrue(instance.mutationIsBounded(2));
+        assertTrue(instance.mutator(0).mutationIsBounded());
+        assertTrue(instance.mutator(1).mutationIsBounded());
+        assertTrue(instance.mutator(2).mutationIsBounded());
+        assertTrue(instance.repOK());
     }
     
     @Test
@@ -216,24 +225,22 @@ public class FloatVectorSpeciesTest {
         final double rProb = 0.5;
         state.parameters.set(BASE.push(FloatVectorSpecies.P_SEGMENT).push("1").push(FloatVectorSpecies.P_RANDOM_WALK_PROBABILITY), ""+rProb);
         instance.setup(state, BASE);
-        
 
+        assertTrue(instance.repOK());
         assertEquals(NUM_GENES, instance.genomeSize);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(0), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(1), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(2), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(0)).stdev(), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(0), 0.000001);
         assertEquals(min1, instance.minGene(1), 0.000001);
         assertEquals(min1, instance.minGene(2), 0.000001);
         assertEquals(DEFAULT_MAX, instance.maxGene(0), 0.000001);
         assertEquals(max1, instance.maxGene(1), 0.000001);
         assertEquals(max1, instance.maxGene(2), 0.000001);
-        assertEquals(Double.NaN, instance.randomWalkProbability(0), 0);
-        assertEquals(rProb, instance.randomWalkProbability(1), 0.000001);
-        assertEquals(rProb, instance.randomWalkProbability(2), 0.000001);
-        assertTrue(instance.mutationIsBounded(0));
-        assertFalse(instance.mutationIsBounded(1));
-        assertFalse(instance.mutationIsBounded(2));
+        assertEquals(rProb, ((FloatVectorSpecies.IntegerRandomWalkMutator)instance.mutator(1)).randomWalkProbability(), 0.000001);
+        assertEquals(rProb, ((FloatVectorSpecies.IntegerRandomWalkMutator)instance.mutator(2)).randomWalkProbability(), 0.000001);
+        assertTrue(instance.mutator(0).mutationIsBounded());
+        assertFalse(instance.mutator(1).mutationIsBounded());
+        assertFalse(instance.mutator(2).mutationIsBounded());
+        assertTrue(instance.repOK());
     }
     
     @Test
@@ -252,20 +259,21 @@ public class FloatVectorSpeciesTest {
         state.parameters.set(BASE.push(FloatVectorSpecies.P_SEGMENT).push("1").push(FloatVectorSpecies.P_MAXGENE), ""+max1);
         state.parameters.set(BASE.push(FloatVectorSpecies.P_SEGMENT).push("1").push(FloatVectorSpecies.P_MUTATION_BOUNDED), "false");
         instance.setup(state, BASE);
-        
 
+        assertTrue(instance.repOK());
         assertEquals(NUM_GENES, instance.genomeSize);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(0), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(1), 0.000001);
-        assertEquals(GLOBAL_STDEV, instance.gaussMutationStdev(2), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(0)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(1)).stdev(), 0.000001);
+        assertEquals(GLOBAL_STDEV, ((FloatVectorSpecies.GaussianMutator)instance.mutator(2)).stdev(), 0.000001);
         assertEquals(DEFAULT_MIN, instance.minGene(0), 0.000001);
         assertEquals(min1, instance.minGene(1), 0.000001);
         assertEquals(min1, instance.minGene(2), 0.000001);
         assertEquals(DEFAULT_MAX, instance.maxGene(0), 0.000001);
         assertEquals(max1, instance.maxGene(1), 0.000001);
         assertEquals(max1, instance.maxGene(2), 0.000001);
-        assertTrue(instance.mutationIsBounded(0));
-        assertFalse(instance.mutationIsBounded(1));
-        assertFalse(instance.mutationIsBounded(2));
+        assertTrue(instance.mutator(0).mutationIsBounded());
+        assertFalse(instance.mutator(1).mutationIsBounded());
+        assertFalse(instance.mutator(2).mutationIsBounded());
+        assertTrue(instance.repOK());
     }
 }

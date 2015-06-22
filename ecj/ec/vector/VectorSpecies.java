@@ -207,15 +207,14 @@ public class VectorSpecies extends Species
     public final static int C_NONE = 0;
     public final static int C_GEOMETRIC = 1;
     public final static int C_UNIFORM = 2;
-
-    /** How often do we retry until we get a non-duplicate gene? */
-    protected int[] duplicateRetries;
-
-    /** Probability that a gene will mutate, per gene.
-        This array is one longer than the standard genome length.
-        The top element in the array represents the parameters for genes in
-        genomes which have extended beyond the genome length.  */
-    protected double[] mutationProbability;
+    
+    /** The global mutation parameters.  These are used by default for each gene
+     * when no per-segment or per-gene parameters are provided to override the defaults. */
+    protected VectorMutator globalMutator;
+    
+    /** Mutation parameters for each gene. 
+     * @see VectorMutator */
+    protected VectorMutator[] mutators;
     
     /** Probability that a gene will cross over -- ONLY used in V_ANY_POINT crossover */
     public double crossoverProbability;
@@ -239,28 +238,34 @@ public class VectorSpecies extends Species
     public double lineDistance;
     /** Was the initial size determined dynamically? */
     public boolean dynamicInitialSize = false;
+    
+    public VectorMutator mutator(final int gene) {
+        assert(gene >= 0);
+        assert(gene < mutators.length);
+        return mutators[gene];
+    }
 
     public double mutationProbability(int gene)
         {
-        double[] m = mutationProbability;
+        final VectorMutator[] m = mutators;
         if (m.length <= gene)
             gene = m.length - 1;
-        return m[gene];
+        return m[gene].mutationProbability();
         }
 
     public int duplicateRetries(int gene)
         {
-        int[] m = duplicateRetries;
+        final VectorMutator[] m = mutators;
         if (m.length <= gene)
             gene = m.length - 1;
-        return m[gene];
+        return m[gene].duplicateRetries();
         }
 
+    @Override
     public Parameter defaultBase()
         {
         return VectorDefaults.base().push(P_VECTORSPECIES);
         }
-
 
     protected void setupGenome(final EvolutionState state, final Parameter base)
         {        
@@ -332,6 +337,7 @@ public class VectorSpecies extends Species
         }
 
 
+    @Override
     public void setup(final EvolutionState state, final Parameter base)
         {
         Parameter def = defaultBase();        
@@ -352,22 +358,6 @@ public class VectorSpecies extends Species
         
         // this might get called twice, I don't think it's a big deal
         setupGenome(state, base);
-
-
-        // MUTATION
-
-        double _mutationProbability = state.parameters.getDoubleWithMax(base.push(P_MUTATIONPROB), def.push(P_MUTATIONPROB), 0.0, 1.0);
-        if (_mutationProbability == -1.0)
-            state.output.fatal("Global mutation probability must be between 0.0 and 1.0 inclusive",
-                base.push(P_MUTATIONPROB),def.push(P_MUTATIONPROB));
-        mutationProbability = fill(new double[genomeSize + 1], _mutationProbability);
-
-        int _duplicateRetries = state.parameters.getIntWithDefault(base.push(P_DUPLICATE_RETRIES), def.push(P_DUPLICATE_RETRIES), 0);
-        if (_duplicateRetries < 0)
-            {
-            state.output.fatal("Duplicate Retries, if defined, must be a value >= 0", base.push(P_DUPLICATE_RETRIES), def.push(P_DUPLICATE_RETRIES));
-            }
-        duplicateRetries = fill(new int[genomeSize + 1], _duplicateRetries);
         
         // CROSSOVER
 
@@ -502,36 +492,13 @@ public class VectorSpecies extends Species
         bases for the gene.  The postfix should be appended to the end of any parameter looked up
         (it often contains a number indicating the gene in question), such as
         state.parameters.exists(base.push(P_PARAM).push(postfix), def.push(P_PARAM).push(postfix)
-                        
-        <p>If you override this method, be sure to call super(...) at some point, ideally first.
     */
     protected void loadParametersForGene(EvolutionState state, int index, Parameter base, Parameter def, String postfix)
-        {       
-        // our only per-gene parameter is mutation probablity.
-        
-        if (state.parameters.exists(base.push(P_MUTATIONPROB).push(postfix), def.push(P_MUTATIONPROB).push(postfix)))
-            {
-            mutationProbability[index] = state.parameters.getDoubleWithMax(base.push(P_MUTATIONPROB).push(postfix), def.push(P_MUTATIONPROB).push(postfix), 0.0, 1.0);
-            if (mutationProbability[index] == -1.0)
-                state.output.fatal("Per-gene or per-segment mutation probability must be between 0.0 and 1.0 inclusive",
-                    base.push(P_MUTATIONPROB).push(postfix),def.push(P_MUTATIONPROB).push(postfix));
-            }
-
-        if (state.parameters.exists(base.push(P_DUPLICATE_RETRIES).push(postfix), def.push(P_DUPLICATE_RETRIES).push(postfix)))
-            {
-            duplicateRetries[index] = state.parameters.getInt(base.push(P_DUPLICATE_RETRIES).push(postfix), def.push(P_DUPLICATE_RETRIES).push(postfix));
-            if (duplicateRetries[index] < 0)
-                state.output.fatal("Duplicate Retries for gene " + index + ", if defined must be a value >= 0", 
-                    base.push(P_DUPLICATE_RETRIES).push(postfix), def.push(P_DUPLICATE_RETRIES).push(postfix));
-            }
-                        
+        {              
         }            
 
     /** Looks up genome segments using start indices.  Segments run up to the next declared start index.  */
-    protected void initializeGenomeSegmentsByStartIndices(final EvolutionState state, 
-        final Parameter base, 
-        final Parameter def,
-        int numSegments)
+    protected void initializeGenomeSegmentsByStartIndices(final EvolutionState state, final Parameter base, final Parameter def, int numSegments)
         {
         //loop in reverse order 
         int previousSegmentEnd = genomeSize;
@@ -582,10 +549,7 @@ public class VectorSpecies extends Species
         }
         
     /** Looks up genome segments using end indices.  Segments run from the previously declared end index. */
-    protected void initializeGenomeSegmentsByEndIndices(final EvolutionState state, 
-        final Parameter base, 
-        final Parameter def,
-        int numSegments)
+    protected void initializeGenomeSegmentsByEndIndices(final EvolutionState state, final Parameter base, final Parameter def, int numSegments)
         {
         int previousSegmentEnd = -1;  
         int currentSegmentEnd = 0;
@@ -634,7 +598,6 @@ public class VectorSpecies extends Species
 
 
     public Individual newIndividual(final EvolutionState state, int thread) 
-        
         {
         VectorIndividual newind = (VectorIndividual)(super.newIndividual(state, thread));
 
@@ -720,6 +683,37 @@ public class VectorSpecies extends Species
             if (array[i] == val) return i;
         return -1;
         }
+    
+    /** Classes of this type store the parameters and algorithm for a mutation method.
+     */
+    protected abstract class VectorMutator {
+        final private double mutationProbability;
+        final private int duplicateRetries;
+        
+        public VectorMutator(final VectorMutator parent, final EvolutionState state, final Parameter base, final Parameter def, final String postfix) {
+            assert(state != null);
+            assert(base != null);
+            if (parent != null) {
+                mutationProbability = state.parameters.getDoubleWithDefault(base.push(P_MUTATIONPROB).push(postfix), def.push(P_MUTATIONPROB).push(postfix), parent.mutationProbability());
+                duplicateRetries = state.parameters.getIntWithDefault(base.push(P_DUPLICATE_RETRIES).push(postfix), def.push(P_DUPLICATE_RETRIES).push(postfix), parent.duplicateRetries());
+            }
+            else {
+                mutationProbability = state.parameters.getDoubleWithMax(base.push(P_MUTATIONPROB).push(postfix), def.push(P_MUTATIONPROB).push(postfix), 0, 1);
+                duplicateRetries = state.parameters.getIntWithDefault(base.push(P_DUPLICATE_RETRIES).push(postfix), def.push(P_DUPLICATE_RETRIES).push(postfix), 0);
+            }
+            if (mutationProbability < 0.0 || mutationProbability > 1.0)
+                state.output.fatal("Global mutation probability must be between 0.0 and 1.0 inclusive",
+                    base.push(P_MUTATIONPROB).push(postfix),def.push(P_MUTATIONPROB).push(postfix));
+            if (duplicateRetries < 0)
+                state.output.fatal("Duplicate Retries, if defined, must be a value >= 0", base.push(P_DUPLICATE_RETRIES).push(postfix), def.push(P_DUPLICATE_RETRIES).push(postfix));
+        }
+        
+        public double mutationProbability() { return mutationProbability; }
+        public int duplicateRetries() { return duplicateRetries; }
+        public abstract String mutationType();
+        public abstract void mutate(EvolutionState state, Individual individual, MersenneTwisterFast rng, int x);
+    }
+    
     }
 
 

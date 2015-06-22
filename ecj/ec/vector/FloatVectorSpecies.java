@@ -156,185 +156,53 @@ import ec.util.*;
 public class FloatVectorSpecies extends VectorSpecies
     {
     public final static String P_MINGENE = "min-gene";
-
     public final static String P_MAXGENE = "max-gene";
-
     public final static String P_MUTATIONTYPE = "mutation-type";
-
     public final static String P_STDEV = "mutation-stdev";
-
     public final static String P_MUTATION_DISTRIBUTION_INDEX = "mutation-distribution-index";
-
     public final static String P_POLYNOMIAL_ALTERNATIVE = "alternative-polynomial-version";
-
-    public final static String V_RESET_MUTATION = "reset";
-
-    public final static String V_GAUSS_MUTATION = "gauss";
-
-    public final static String V_POLYNOMIAL_MUTATION = "polynomial";
-    
-    public final static String V_INTEGER_RANDOM_WALK_MUTATION = "integer-random-walk";
-
-    public final static String V_INTEGER_RESET_MUTATION = "integer-reset";
-
     public final static String P_RANDOM_WALK_PROBABILITY = "random-walk-probability";
-
     public final static String P_OUTOFBOUNDS_RETRIES = "out-of-bounds-retries";
-
     public final static String P_MUTATION_BOUNDED = "mutation-bounded";
 
-    public final static int C_RESET_MUTATION = 0;
-
-    public final static int C_GAUSS_MUTATION = 1;
-
-    public final static int C_POLYNOMIAL_MUTATION = 2;
-
-    public final static int C_INTEGER_RESET_MUTATION = 3;
-
-    public final static int C_INTEGER_RANDOM_WALK_MUTATION = 4;
-        
-
-    /** Min-gene value, per gene.
-        This array is one longer than the standard genome length.
-        The top element in the array represents the parameters for genes in
-        genomes which have extended beyond the genome length.  */
-    protected double[] minGene;
-
-    /** Max-gene value, per gene.
-        This array is one longer than the standard genome length.
-        The top element in the array represents the parameters for genes in
-        genomes which have extended beyond the genome length.  */
-    protected double[] maxGene;
-
-    /** Mutation type, per gene.
-        This array is one longer than the standard genome length.
-        The top element in the array represents the parameters for genes in
-        genomes which have extended beyond the genome length.  */
-    protected int[] mutationType;
-
-    /** Standard deviation for Gaussian Mutation, per gene.
-        This array is one longer than the standard genome length.
-        The top element in the array represents the parameters for genes in
-        genomes which have extended beyond the genome length.  */
-    protected double[] gaussMutationStdev;
-
-    /** Whether mutation is bounded to the min- and max-gene values, per gene.
-        This array is one longer than the standard genome length.
-        The top element in the array represents the parameters for genes in
-        genomes which have extended beyond the genome length.  */
-    protected boolean[] mutationIsBounded;
-
-    /** Whether the mutationIsBounded value was defined, per gene.
-        Used internally only.
-        This array is one longer than the standard genome length.
-        The top element in the array represents the parameters for genes in
-        genomes which have extended beyond the genome length.  */
-    boolean mutationIsBoundedDefined;
-
-    /** The distribution index for Polynomial Mutation, per gene.
-        This array is one longer than the standard genome length.
-        The top element in the array represents the parameters for genes in
-        genomes which have extended beyond the genome length.  */
-    protected int[] mutationDistributionIndex;
-
-    /** Whether the Polynomial Mutation method is the "alternative" method, per gene.
-        This array is one longer than the standard genome length.
-        The top element in the array represents the parameters for genes in
-        genomes which have extended beyond the genome length.  */
-    protected boolean[] polynomialIsAlternative;
-
-    /** Whether the polymialIsAlternative value was defined, per gene.
-        Used internally only.
-        This array is one longer than the standard genome length.
-        The top element in the array represents the parameters for genes in
-        genomes which have extended beyond the genome length.  */
-    boolean polynomialIsAlternativeDefined;
-
-    /** The continuation probability for Integer Random Walk Mutation, per gene.
-        This array is one longer than the standard genome length.
-        The top element in the array represents the parameters for genes in
-        genomes which have extended beyond the genome length.  */
-    protected double[] randomWalkProbability;
-
-    /** The number of times Polynomial Mutation or Gaussian Mutation retry for valid
-        numbers until they get one. */
-    public int outOfBoundsRetries;
+    public final static String V_RESET_MUTATION = "reset";
+    public final static String V_GAUSS_MUTATION = "gauss";
+    public final static String V_POLYNOMIAL_MUTATION = "polynomial";
+    public final static String V_INTEGER_RANDOM_WALK_MUTATION = "integer-random-walk";
+    public final static String V_INTEGER_RESET_MUTATION = "integer-reset";
+    
+    // Set to true when setup() is called.  This is only used for the representation invariant.
+    private boolean isSetup;
+    
     public static final int DEFAULT_OUT_OF_BOUNDS_RETRIES = 100;
                 
     static final double SIMULATED_BINARY_CROSSOVER_EPS = 1.0e-14;   
 
-    public void outOfRangeRetryLimitReached(EvolutionState state)
-        {
-        state.output.warnOnce(
-            "The limit of 'out-of-range' retries for gaussian or polynomial mutation (" + DEFAULT_OUT_OF_BOUNDS_RETRIES + ") was reached.");
-        }
+    @Override
+    public DoubleVectorMutator mutator(final int gene) {
+        assert(gene >= 0);
+        assert(gene < mutators.length);
+        return (DoubleVectorMutator) mutators[gene];
+    }
     
     public double maxGene(int gene)
         {
-        double[] m = maxGene;
+        final VectorMutator[] m = mutators;
         if (m.length <= gene)
             gene = m.length - 1;
-        return m[gene];
+        return ((DoubleVectorMutator)m[gene]).maxGene();
         }
 
     public double minGene(int gene)
         {
-        double[] m = minGene;
+        final VectorMutator[] m = mutators;
         if (m.length <= gene)
             gene = m.length - 1;
-        return m[gene];
-        }
-
-    public int mutationType(int gene)
-        {
-        int[] m = mutationType;
-        if (m.length <= gene)
-            gene = m.length - 1;
-        return m[gene];
-        }
-
-    public double gaussMutationStdev(int gene)
-        {
-        double[] m = gaussMutationStdev;
-        if (m.length <= gene)
-            gene = m.length - 1;
-        return m[gene];
-        }
-
-    public boolean mutationIsBounded(int gene)
-        {
-        boolean[] m = mutationIsBounded;
-        if (m.length <= gene)
-            gene = m.length - 1;
-        return m[gene];
-        }
-
-    public int mutationDistributionIndex(int gene)
-        {
-        int[] m = mutationDistributionIndex;
-        if (m.length <= gene)
-            gene = m.length - 1;
-        return m[gene];
-        }
-
-    public boolean polynomialIsAlternative(int gene)
-        {
-        boolean[] m = polynomialIsAlternative;
-        if (m.length <= gene)
-            gene = m.length - 1;
-        return m[gene];
-        }
-
-    public double randomWalkProbability(int gene)
-        {
-        double[] m = randomWalkProbability;
-        if (m.length <= gene)
-            gene = m.length - 1;
-        return m[gene];
+        return ((DoubleVectorMutator)m[gene]).minGene();
         }
 
 
-    public boolean inNumericalTypeRange(double geneVal)
+    private boolean inNumericalTypeRange(double geneVal)
         {
         if (i_prototype instanceof FloatVectorIndividual)
             return (geneVal <= Float.MAX_VALUE && geneVal >= -Float.MAX_VALUE);
@@ -351,299 +219,467 @@ public class FloatVectorSpecies extends VectorSpecies
         
         setupGenome(state, base);
         
-        // OUT OF BOUNDS RETRIES
-
-        outOfBoundsRetries = state.parameters.getIntWithDefault(base.push(P_OUTOFBOUNDS_RETRIES), def.push(P_OUTOFBOUNDS_RETRIES), DEFAULT_OUT_OF_BOUNDS_RETRIES);
-        if(outOfBoundsRetries<0)
-            state.output.fatal("Out of bounds retries must be >= 0.", base.push(P_OUTOFBOUNDS_RETRIES), def.push(P_OUTOFBOUNDS_RETRIES));
-
-
-        // CREATE THE ARRAYS
+        mutators = new VectorMutator[genomeSize];
+        // Set the global mutation parameters
+        globalMutator = getMutatorForType(null, state, base, def, "");
         
-        minGene = new double[genomeSize + 1];
-        maxGene = new double[genomeSize + 1];
-        mutationType = fill(new int[genomeSize + 1], -1);
-        gaussMutationStdev = fill(new double[genomeSize + 1], Double.NaN);
-        mutationDistributionIndex = fill(new int[genomeSize + 1], -1);
-        polynomialIsAlternative = new boolean[genomeSize + 1];
-        mutationIsBounded = new boolean[genomeSize + 1];
-        randomWalkProbability = fill(new double[genomeSize + 1], Double.NaN);
-        
-
-        // GLOBAL MIN/MAX GENES
-        
-        double _minGene = state.parameters.getDoubleWithDefault(base.push(P_MINGENE), def.push(P_MINGENE), 0);
-        double _maxGene = state.parameters.getDouble(base.push(P_MAXGENE), def.push(P_MAXGENE), _minGene);
-        if (_maxGene < _minGene)
-            state.output.fatal("FloatVectorSpecies must have a default min-gene which is <= the default max-gene",
-                base.push(P_MAXGENE), def.push(P_MAXGENE));
-        fill(minGene, _minGene);
-        fill(maxGene, _maxGene);
-
-
-
-        /// MUTATION
-
-        String mtype = state.parameters.getStringWithDefault(base.push(P_MUTATIONTYPE), def.push(P_MUTATIONTYPE), null);
-        int _mutationType = C_RESET_MUTATION;
-        if (mtype == null)
-            state.output.warning("No global mutation type given for FloatVectorSpecies, assuming 'reset' mutation",
-                base.push(P_MUTATIONTYPE), def.push(P_MUTATIONTYPE));
-        else if (mtype.equalsIgnoreCase(V_RESET_MUTATION))
-            _mutationType = C_RESET_MUTATION; // redundant
-        else if (mtype.equalsIgnoreCase(V_POLYNOMIAL_MUTATION))
-            _mutationType = C_POLYNOMIAL_MUTATION; // redundant
-        else if (mtype.equalsIgnoreCase(V_GAUSS_MUTATION))
-            _mutationType = C_GAUSS_MUTATION;
-        else if (mtype.equalsIgnoreCase(V_INTEGER_RESET_MUTATION))
-            {
-            _mutationType = C_INTEGER_RESET_MUTATION;
-            state.output.warnOnce("Integer Reset Mutation used in FloatVectorSpecies.  Be advised that during initialization these genes will only be set to integer values.");
-            }
-        else if (mtype.equalsIgnoreCase(V_INTEGER_RANDOM_WALK_MUTATION))
-            {
-            _mutationType = C_INTEGER_RANDOM_WALK_MUTATION;
-            state.output.warnOnce("Integer Random Walk Mutation used in FloatVectorSpecies.  Be advised that during initialization these genes will only be set to integer values.");
-            }
-        else
-            state.output.fatal("FloatVectorSpecies given a bad mutation type: "
-                + mtype, base.push(P_MUTATIONTYPE), def.push(P_MUTATIONTYPE));
-        fill(mutationType, _mutationType);
-
-
-        if (_mutationType == C_POLYNOMIAL_MUTATION)
-            {
-            int _mutationDistributionIndex = state.parameters.getInt(base.push(P_MUTATION_DISTRIBUTION_INDEX), def.push(P_MUTATION_DISTRIBUTION_INDEX), 0);
-            if (_mutationDistributionIndex < 0)
-                state.output.fatal("If FloatVectorSpecies is going to use polynomial mutation as its global mutation type, the global distribution index must be defined and >= 0.",
-                    base.push(P_MUTATION_DISTRIBUTION_INDEX), def.push(P_MUTATION_DISTRIBUTION_INDEX));
-            fill(mutationDistributionIndex, _mutationDistributionIndex);
-            
-            if (!state.parameters.exists(base.push(P_POLYNOMIAL_ALTERNATIVE), def.push(P_POLYNOMIAL_ALTERNATIVE)))
-                state.output.warning("FloatVectorSpecies is using polynomial mutation as its global mutation type, but " + P_POLYNOMIAL_ALTERNATIVE + " is not defined.  Assuming 'true'");
-            boolean _polynomialIsAlternative = state.parameters.getBoolean(base.push(P_POLYNOMIAL_ALTERNATIVE), def.push(P_POLYNOMIAL_ALTERNATIVE), true);
-            fill(polynomialIsAlternative, _polynomialIsAlternative);
-            polynomialIsAlternativeDefined = true;
-            }
-        if (_mutationType == C_GAUSS_MUTATION)
-            {
-            double _gaussMutationStdev = state.parameters.getDouble(base.push(P_STDEV),def.push(P_STDEV), 0);
-            if (_gaussMutationStdev <= 0)
-                state.output.fatal("If it's going to use gaussian mutation as its global mutation type, FloatvectorSpecies must have a strictly positive standard deviation",
-                    base.push(P_STDEV), def.push(P_STDEV));
-            fill(gaussMutationStdev, _gaussMutationStdev);
-            }
-        if (_mutationType == C_INTEGER_RANDOM_WALK_MUTATION)
-            {
-            double _randomWalkProbability = state.parameters.getDoubleWithMax(base.push(P_RANDOM_WALK_PROBABILITY),def.push(P_RANDOM_WALK_PROBABILITY), 0.0, 1.0);
-            if (_randomWalkProbability <= 0)
-                state.output.fatal("If it's going to use random walk mutation as its global mutation type, FloatvectorSpecies must a random walk mutation probability between 0.0 and 1.0.",
-                    base.push(P_RANDOM_WALK_PROBABILITY), def.push(P_RANDOM_WALK_PROBABILITY));
-            fill(randomWalkProbability, _randomWalkProbability);
-            }        
-        
-        if (_mutationType == C_POLYNOMIAL_MUTATION || 
-            _mutationType == C_GAUSS_MUTATION ||
-            _mutationType == C_INTEGER_RANDOM_WALK_MUTATION )
-            {
-            if (!state.parameters.exists(base.push(P_MUTATION_BOUNDED), def.push(P_MUTATION_BOUNDED)))
-                state.output.warning("FloatVectorSpecies is using gaussian, polynomial, or integer random walk mutation as its global mutation type, but " + P_MUTATION_BOUNDED + " is not defined.  Assuming 'true'");
-            boolean _mutationIsBounded = state.parameters.getBoolean(base.push(P_MUTATION_BOUNDED), def.push(P_MUTATION_BOUNDED), true);
-            fill(mutationIsBounded, _mutationIsBounded);
-            mutationIsBoundedDefined = true;
-            }
-            
-
-
-        // CALLING SUPER
-                
-        // This will cause the remaining parameters to get set up, and
-        // all per-gene and per-segment parameters to get set up as well.
-        // We need to do this at this point because the global params need
-        // to get set up first, and also prior to the prototypical individual
-        // getting setup at the end of super.setup(...).
-
+        // The call to super will populate the mutator array for per-gene
+        // and per-segment parameters via calls to loadParametersForGene().
         super.setup(state, base);
-
-
-
-
-              
-        // VERIFY
-        
-        for(int x=0 ; x < genomeSize + 1; x++)
-            {
-            if (maxGene[x] != maxGene[x])  // uh oh, NaN
-                state.output.fatal("FloatVectorSpecies found that max-gene[" + x + "] is NaN");
-
-            if (minGene[x] != minGene[x])  // uh oh, NaN
-                state.output.fatal("FloatVectorSpecies found that min-gene[" + x + "] is NaN");
-
-            if (maxGene[x] < minGene[x])
-                state.output.fatal("FloatVectorSpecies must have a min-gene[" + x + "] which is <= the max-gene[" + x + "]");
-
-            // check to see if these longs are within the data type of the particular individual
-            if (!inNumericalTypeRange(minGene[x]))
-                state.output.fatal("This FloatvectorSpecies has a prototype of the kind: "
-                    + i_prototype.getClass().getName()
-                    + ", but doesn't have a min-gene["
-                    + x
-                    + "] value within the range of this prototype's genome's data types");
-            if (!inNumericalTypeRange(maxGene[x]))
-                state.output.fatal("This FloatvectorSpecies has a prototype of the kind: "
-                    + i_prototype.getClass().getName()
-                    + ", but doesn't have a max-gene["
-                    + x
-                    + "] value within the range of this prototype's genome's data types");
-                    
-            if (((mutationType[x] == FloatVectorSpecies.C_INTEGER_RESET_MUTATION || 
-                        mutationType[x] == FloatVectorSpecies.C_INTEGER_RANDOM_WALK_MUTATION))  // integer type
-                && (maxGene[x] != Math.floor(maxGene[x])))
-                state.output.fatal("Gene " + x + " is using an integer mutation method, but the max gene is not an integer (" + maxGene[x] + ").");
-                                 
-            if (((mutationType[x] == FloatVectorSpecies.C_INTEGER_RESET_MUTATION || 
-                        mutationType[x] == FloatVectorSpecies.C_INTEGER_RANDOM_WALK_MUTATION))  // integer type
-                && (minGene[x] != Math.floor(minGene[x])))
-                state.output.fatal("Gene " + x + " is using an integer mutation method, but the min gene is not an integer (" + minGene[x] + ").");
-            }       
-                        
-        /*
-        //Debugging
-        for(int i = 0; i < minGene.length; i++)
-        System.out.println("Min: " + minGene[i] + ", Max: " + maxGene[i]);
-        */
         }
     
-    
-    
-    protected void loadParametersForGene(EvolutionState state, int index, Parameter base, Parameter def, String postfix)
+    @Override
+    protected void loadParametersForGene(final EvolutionState state, final int index, final Parameter base, final Parameter def, final String postfix)
         {       
         super.loadParametersForGene(state, index, base, def, postfix);
-        
-        double minVal = state.parameters.getDoubleWithDefault(base.push(P_MINGENE).push(postfix), def.push(P_MINGENE).push(postfix), Double.NaN);
-        if (minVal == minVal)  // it's not NaN
-            {                        
-            //check if the value is in range
-            if (!inNumericalTypeRange(minVal))
-                state.output.fatal("Min Gene Value out of range for data type " + i_prototype.getClass().getName(),
-                    base.push(P_MINGENE).push(postfix), 
-                    base.push(P_MINGENE).push(postfix));
-            else minGene[index] = minVal;
-
-            if (dynamicInitialSize)
-                state.output.warnOnce("Using dynamic initial sizing, but per-gene or per-segment min-gene declarations.  This is probably wrong.  You probably want to use global min/max declarations.",
-                    base.push(P_MINGENE).push(postfix), 
-                    base.push(P_MINGENE).push(postfix));
-            }
-            
-        double maxVal = state.parameters.getDoubleWithDefault(base.push(P_MAXGENE).push(postfix), def.push(P_MAXGENE).push(postfix), Double.NaN);
-        if (maxVal == maxVal)  // it's not NaN
-            {                        
-            //check if the value is in range
-            if (!inNumericalTypeRange(maxVal))
-                state.output.fatal("Max Gene Value out of range for data type " + i_prototype.getClass().getName(),
-                    base.push(P_MAXGENE).push(postfix), 
-                    base.push(P_MAXGENE).push(postfix));
-            else maxGene[index] = maxVal;
-
-            if (dynamicInitialSize)
-                state.output.warnOnce("Using dynamic initial sizing, but per-gene or per-segment max-gene declarations.  This is probably wrong.  You probably want to use global min/max declarations.",
-                    base.push(P_MAXGENE).push(postfix), 
-                    base.push(P_MAXGENE).push(postfix));
-            }
-        
-        if ((maxVal == maxVal && !(minVal == minVal)))
-            state.output.warning("Max Gene specified but not Min Gene", base.push(P_MINGENE).push(postfix), def.push(P_MINGENE).push(postfix));
-                
-        if ((minVal == minVal && !(maxVal == maxVal)))
-            state.output.warning("Min Gene specified but not Max Gene", base.push(P_MAXGENE).push(postfix), def.push(P_MINGENE).push(postfix));
-
-
-        /// MUTATION
-                   
-        String mtype = state.parameters.getStringWithDefault(base.push(P_MUTATIONTYPE).push(postfix), def.push(P_MUTATIONTYPE).push(postfix), null);
-        int mutType = -1;
-        if (mtype == null) { }  // we're cool
-        else if (mtype.equalsIgnoreCase(V_RESET_MUTATION))
-            mutType = mutationType[index] = C_RESET_MUTATION; 
-        else if (mtype.equalsIgnoreCase(V_POLYNOMIAL_MUTATION))
-            mutType = mutationType[index] = C_POLYNOMIAL_MUTATION;
-        else if (mtype.equalsIgnoreCase(V_GAUSS_MUTATION))
-            mutType = mutationType[index] = C_GAUSS_MUTATION;
-        else if (mtype.equalsIgnoreCase(V_INTEGER_RESET_MUTATION))      
-            {
-            mutType = mutationType[index] = C_INTEGER_RESET_MUTATION;
-            state.output.warnOnce("Integer Reset Mutation used in FloatVectorSpecies.  Be advised that during initialization these genes will only be set to integer values.");
-            }
-        else if (mtype.equalsIgnoreCase(V_INTEGER_RANDOM_WALK_MUTATION))
-            {
-            mutType = mutationType[index] = C_INTEGER_RANDOM_WALK_MUTATION;
-            state.output.warnOnce("Integer Random Walk Mutation used in FloatVectorSpecies.  Be advised that during initialization these genes will only be set to integer values.");
-            }
-        else
-            state.output.fatal("FloatVectorSpecies given a bad mutation type: " + mtype, 
-                base.push(P_MUTATIONTYPE).push(postfix), def.push(P_MUTATIONTYPE).push(postfix));
-
-
-        if (mutType == C_POLYNOMIAL_MUTATION)
-            {
-            if (state.parameters.exists(base.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix), def.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix)))
-                {
-                mutationDistributionIndex[index] = state.parameters.getInt(base.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix), def.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix), 0);
-                if (mutationDistributionIndex[index] < 0)
-                    state.output.fatal("If FloatVectorSpecies is going to use polynomial mutation as a per-gene or per-segment type, the global distribution index must be defined and >= 0.",
-                        base.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix), def.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix));
-                }
-            else if (mutationDistributionIndex[index] != mutationDistributionIndex[index])  // it's NaN
-                state.output.fatal("If FloatVectorSpecies is going to use polynomial mutation as a per-gene or per-segment type, either the global or per-gene/per-segment distribution index must be defined and >= 0.",
-                    base.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix), def.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix));
-            
-            if (state.parameters.exists(base.push(P_POLYNOMIAL_ALTERNATIVE).push(postfix), def.push(P_POLYNOMIAL_ALTERNATIVE).push(postfix)))
-                {
-                polynomialIsAlternative[index] = state.parameters.getBoolean(base.push(P_POLYNOMIAL_ALTERNATIVE).push(postfix), def.push(P_POLYNOMIAL_ALTERNATIVE).push(postfix), true);
-                }
-            }
-        if (mutType == C_GAUSS_MUTATION)
-            {
-            if (state.parameters.exists(base.push(P_STDEV).push(postfix),def.push(P_STDEV).push(postfix)))
-                {
-                gaussMutationStdev[index] = state.parameters.getDouble(base.push(P_STDEV).push(postfix),def.push(P_STDEV).push(postfix), 0);
-                if (gaussMutationStdev[index] <= 0)
-                    state.output.fatal("If it's going to use gaussian mutation as a per-gene or per-segment type, it must have a strictly positive standard deviation",
-                        base.push(P_STDEV).push(postfix), def.push(P_STDEV).push(postfix));
-                }
-            else if (gaussMutationStdev[index] != gaussMutationStdev[index])
-                state.output.fatal("If FloatVectorSpecies is going to use gaussian mutation as a per-gene or per-segment type, either the global or per-gene/per-segment standard deviation must be defined.",
-                    base.push(P_STDEV).push(postfix), def.push(P_STDEV).push(postfix));
-            }
-        if (mutType == C_INTEGER_RANDOM_WALK_MUTATION)
-            {
-            if (state.parameters.exists(base.push(P_RANDOM_WALK_PROBABILITY).push(postfix),def.push(P_RANDOM_WALK_PROBABILITY).push(postfix)))
-                {
-                randomWalkProbability[index] = state.parameters.getDoubleWithMax(base.push(P_RANDOM_WALK_PROBABILITY).push(postfix),def.push(P_RANDOM_WALK_PROBABILITY).push(postfix), 0.0, 1.0);
-                if (randomWalkProbability[index] <= 0)
-                    state.output.fatal("If it's going to use random walk mutation as a per-gene or per-segment type, FloatVectorSpecies must a random walk mutation probability between 0.0 and 1.0.",
-                        base.push(P_RANDOM_WALK_PROBABILITY).push(postfix), def.push(P_RANDOM_WALK_PROBABILITY).push(postfix));
-                }
-            else
-                state.output.fatal("If FloatVectorSpecies is going to use polynomial mutation as a per-gene or per-segment type, either the global or per-gene/per-segment random walk mutation probability must be defined.",
-                    base.push(P_RANDOM_WALK_PROBABILITY).push(postfix), def.push(P_RANDOM_WALK_PROBABILITY).push(postfix));
-            }  
-        
-        if (mutType == C_POLYNOMIAL_MUTATION ||
-            mutType == C_GAUSS_MUTATION ||
-            mutType == C_INTEGER_RANDOM_WALK_MUTATION)
-            {
-            if (state.parameters.exists(base.push(P_MUTATION_BOUNDED).push(postfix), def.push(P_MUTATION_BOUNDED).push(postfix)))
-                {
-                mutationIsBounded[index] = state.parameters.getBoolean(base.push(P_MUTATION_BOUNDED).push(postfix), def.push(P_MUTATION_BOUNDED).push(postfix), true);
-                }
-            else if (!mutationIsBoundedDefined)
-                state.output.fatal("If FloatVectorSpecies is going to use gaussian, polynomial, or integer random walk mutation as a per-gene or per-segment type, the mutation bounding must be defined.",
-                    base.push(P_MUTATION_BOUNDED).push(postfix), def.push(P_MUTATION_BOUNDED).push(postfix));
-            }
-         
+        // The mutator may already have been set up with segment-level parameters.  If so,
+        // inherit the segment parameters.  If not, inherit the global parameters.
+        final VectorMutator parent = (mutators[index] == null) ? globalMutator : mutators[index];
+        mutators[index] = getMutatorForType(parent, state, base, def, postfix);
         }
     
+    /** Load global, per-segment, or per-gene parameters for a mutation operator. 
+     * @return A DoubleVectorMutator that encodes a mutation operator. */
+    protected DoubleVectorMutator getMutatorForType(final VectorMutator parent, final EvolutionState state, final Parameter base, final Parameter def, final String postfix)
+    {            
+        String mutationType = state.parameters.getStringWithDefault(base.push(P_MUTATIONTYPE).push(postfix), def.push(P_MUTATIONTYPE).push(postfix), (parent == null) ? null : parent.mutationType());
+        if (mutationType == null)
+        {
+            mutationType = V_RESET_MUTATION;
+            state.output.warning(String.format("No mutation type given for %s, assuming '%s' mutation", this.getClass().getSimpleName(), V_RESET_MUTATION),
+                base.push(P_MUTATIONTYPE).push(postfix), def.push(P_MUTATIONTYPE).push(postfix));
+        }
+        if (mutationType.equals(V_RESET_MUTATION))
+            return new ResetMutator(parent, state, base, def, postfix);
+        else if (mutationType.equals(V_POLYNOMIAL_MUTATION))
+            return new PolynomialMutator(parent, state, base, def, postfix);
+        else if (mutationType.equals(V_GAUSS_MUTATION))
+            return new GaussianMutator(parent, state, base, def, postfix);
+        else if (mutationType.equals(V_INTEGER_RESET_MUTATION))
+        {
+            state.output.warnOnce(String.format("Integer Reset Mutation used in %s.  Be advised that during initialization these genes will only be set to integer values.", this.getClass().getSimpleName()));
+            return new IntegerResetMutator(parent, state, base, def, postfix);
+        }
+        else if (mutationType.equals(V_INTEGER_RANDOM_WALK_MUTATION))
+        {
+            state.output.warnOnce(String.format("Integer Random Walk Mutation used in %s.  Be advised that during initialization these genes will only be set to integer values.", this.getClass().getSimpleName()));
+            return new IntegerRandomWalkMutator(parent, state, base, def, postfix);
+        }
+        else {
+            state.output.fatal(String.format("%s given a bad mutation type: %s", this.getClass().getSimpleName(), mutationType), base.push(P_MUTATIONTYPE).push(postfix), def.push(P_MUTATIONTYPE).push(postfix));
+            return null;
+        }
+    }
+    
+    /** Set the value of a gene from an Individual that is either a 
+     * FloatVectorIndividual or a DoubleVectorIndividual.  This hack allows us to
+     * write general code that works with both individual types.
+     */
+    private static void setGeneValue(final Individual ind, final int index, double value) {
+        assert(ind != null);
+        assert(!Double.isNaN(value));
+        if (ind instanceof FloatVectorIndividual)
+            ((FloatVectorIndividual)ind).genome[index] = (float) value;
+        else
+            ((DoubleVectorIndividual)ind).genome[index] = value;
+    }
+    
+    /** Retrieve the value of a gene from an Individual that is either a 
+     * FloatVectorIndividual or a DoubleVectorIndividual. This hack allows us to
+     * write general code that works with both individual types.
+     */
+    private static double getGeneValue(final Individual ind, final int index) {
+        assert(ind != null);
+        if (ind instanceof FloatVectorIndividual)
+            return ((FloatVectorIndividual)ind).genome[index];
+        else
+            return ((DoubleVectorIndividual)ind).genome[index];
+    }
+
+    /** Representation invariant.  This is used for asserts and unit tests,
+     * to ensure that the class is always in a valid state.
+     * 
+     * @return Always true.  If this is ever false, it means that a fault has caused the class to be in an invalid state.
+     */
+    public final boolean repOK() {
+        return V_GAUSS_MUTATION != null
+                && !V_GAUSS_MUTATION.isEmpty()
+                && V_GAUSS_MUTATION.equals(V_GAUSS_MUTATION.toLowerCase())
+                && V_INTEGER_RANDOM_WALK_MUTATION != null
+                && !V_INTEGER_RANDOM_WALK_MUTATION.isEmpty()
+                && V_INTEGER_RESET_MUTATION != null
+                && !V_INTEGER_RESET_MUTATION.isEmpty()
+                && V_POLYNOMIAL_MUTATION != null
+                && !V_POLYNOMIAL_MUTATION.isEmpty()
+                && V_RESET_MUTATION != null
+                && !V_RESET_MUTATION.isEmpty()
+                && DEFAULT_OUT_OF_BOUNDS_RETRIES >= 0
+                && !isSetup
+                || (mutators != null
+                && mutators.length == genomeSize
+                && !containsNulls(mutators));
+    }
+    
+    private static boolean containsNulls(final Object[] array) {
+        for (final Object o : array)
+            if (o == null)
+                return true;
+        return false;
+    }
+    
+    /** This class stores the parameters and algorithm for a specific mutation operator
+     * that operates on FloatVectorIndividuals and DoubleVectorIndividuals. */
+    protected abstract static class DoubleVectorMutator extends VectorMutator {
+        final protected double minGene;
+        final protected double maxGene;
+        final protected boolean mutationIsBounded;
         
+        public DoubleVectorMutator(final VectorMutator parent, final EvolutionState state, final Parameter base, final Parameter def, final String postfix) {
+            super(parent, state, base, def, postfix);
+            assert(state != null);
+            assert(base != null);
+            
+            // If the parent is of this type, inherit its parameters
+            final double defaultMin = (parent instanceof DoubleVectorMutator) ? ((DoubleVectorMutator)parent).minGene : 0;
+            final double defaultMax = (parent instanceof DoubleVectorMutator) ? ((DoubleVectorMutator)parent).maxGene : defaultMin;
+            final boolean defaultBounded = (parent instanceof DoubleVectorMutator) ? ((DoubleVectorMutator)parent).mutationIsBounded : true;
+            
+            minGene = state.parameters.getDoubleWithDefault(base.push(P_MINGENE).push(postfix), def.push(P_MINGENE).push(postfix), defaultMin);
+            maxGene = state.parameters.getDoubleWithDefault(base.push(P_MAXGENE).push(postfix), def.push(P_MAXGENE).push(postfix), defaultMax);
+            if (maxGene < minGene)
+                state.output.fatal(String.format("%s must have a %s which is <= the %s", FloatVectorSpecies.class.getSimpleName(), P_MINGENE, P_MAXGENE),
+                        base.push(P_MAXGENE).push(postfix), def.push(P_MAXGENE).push(postfix));
+            if (!state.parameters.exists(base.push(P_MUTATION_BOUNDED).push(postfix), def.push(P_MUTATION_BOUNDED).push(postfix)))
+                state.output.warning(String.format("%s is using gaussian, polynomial, or integer random walk mutation as its global mutation type, but '%s' is not defined.  Assuming 'true'", FloatVectorSpecies.class.getSimpleName(), P_MUTATION_BOUNDED));
+            mutationIsBounded = state.parameters.getBoolean(base.push(P_MUTATION_BOUNDED).push(postfix), def.push(P_MUTATION_BOUNDED).push(postfix), defaultBounded);
+        }
+        
+        /** @return True if the gene that this operator manipulates can only assume integer values. */
+        public abstract boolean isIntegerType();
+
+        public double minGene() { return minGene; }
+
+        public double maxGene() { return maxGene; }
+
+        public boolean mutationIsBounded() { return mutationIsBounded; }
+    }
+        
+    /** Stores the parameters and algorithm for the integer-random-walk mutation method. */
+    protected static final class IntegerRandomWalkMutator extends DoubleVectorMutator {
+        public static final double MAXIMUM_INTEGER_IN_DOUBLE = 9.007199254740992E15;
+        
+        final private double randomWalkProbability;
+        
+        public double randomWalkProbability() { return randomWalkProbability; }
+        
+        public IntegerRandomWalkMutator(final VectorMutator parent, final EvolutionState state, final Parameter base, final Parameter def, final String postfix) {
+            super(parent, state, base, def, postfix);
+            assert(state != null);
+            assert(base != null);
+            // If the parent is of this type, inherit its parameters
+            if (parent instanceof IntegerRandomWalkMutator)
+                randomWalkProbability = state.parameters.getDoubleWithDefault(base.push(P_RANDOM_WALK_PROBABILITY).push(postfix), def.push(P_RANDOM_WALK_PROBABILITY).push(postfix), ((IntegerRandomWalkMutator)parent).randomWalkProbability);
+            else
+                randomWalkProbability = state.parameters.getDouble(base.push(P_RANDOM_WALK_PROBABILITY).push(postfix), def.push(P_RANDOM_WALK_PROBABILITY).push(postfix));
+            if (randomWalkProbability < 0 || randomWalkProbability > 1.0)
+                state.output.fatal(String.format("'%s' is set to %f for '%s' mutation, but must be a probability between 0 and 1.", P_RANDOM_WALK_PROBABILITY, randomWalkProbability, V_INTEGER_RANDOM_WALK_MUTATION),
+                        base.push(P_RANDOM_WALK_PROBABILITY).push(postfix), def.push(P_RANDOM_WALK_PROBABILITY).push(postfix));
+            assert(repOK());
+        }
+        
+        @Override
+        public void mutate(final EvolutionState state, final Individual individual, final MersenneTwisterFast random, final int index) {
+            assert(state != null);
+            assert(individual != null);
+            assert(random != null);
+            assert(index > 0);
+            final double min = mutationIsBounded() ? minGene() : -MAXIMUM_INTEGER_IN_DOUBLE;
+            final double max = mutationIsBounded() ? maxGene() : MAXIMUM_INTEGER_IN_DOUBLE;
+            int g = (int) getGeneValue(individual, index);
+            do
+            {
+                int n = (int)(random.nextBoolean() ? 1 : -1);
+                if ((n == 1 && g < max) ||
+                    (n == -1 && g > min))
+                    g += n;
+                else if ((n == -1 && g < max) ||
+                    (n == 1 && g > min))
+                    g -= n;
+                else
+                    state.output.fatal(String.format("Illegal state reached in %s.mutate().", IntegerRandomWalkMutator.class.getSimpleName()));
+            }
+            while (random.nextBoolean(randomWalkProbability));
+            setGeneValue(individual, index, g);
+        }
+
+        @Override
+        public String mutationType() {
+            return V_INTEGER_RANDOM_WALK_MUTATION;
+        }
+        
+        public final boolean repOK() {
+            return minGene >= 0.0
+                   && maxGene >= minGene
+                    && !Double.isNaN(randomWalkProbability)
+                    && randomWalkProbability >= 0.0
+                    && randomWalkProbability <= 1.0;
+        }
+
+        @Override
+        public boolean isIntegerType() { return true; }
+    }
+    
+    /** Stores the parameters and algorithm for the float-reset mutation method. */
+    protected static final class ResetMutator extends DoubleVectorMutator {
+        
+        public ResetMutator(final VectorMutator parent, final EvolutionState state, final Parameter base, final Parameter def, final String postfix) {
+            super(parent, state, base, def, postfix);
+            assert(state != null);
+            assert(base != null);
+            assert(repOK());
+        }
+        
+        @Override
+        public void mutate(final EvolutionState state, final Individual individual, final MersenneTwisterFast random, final int index) {
+            assert(state != null);
+            assert(individual != null);
+            assert(random != null);
+            assert(index > 0);
+            final double val = (float)(minGene + random.nextFloat(true, true) * (maxGene - minGene));
+            setGeneValue(individual, index, val);
+        }
+
+        @Override
+        public String mutationType() {
+            return V_RESET_MUTATION;
+        }
+        
+        public final boolean repOK() {
+            return minGene >= 0.0
+                   && maxGene >= minGene;
+        }
+
+        @Override
+        public boolean isIntegerType() { return false; }
+    }
+    
+    /** Stores the parameters and algorithm for the Gaussian mutation methods. */
+    protected static final class GaussianMutator extends DoubleVectorMutator {
+        
+        final private double stdev;
+        final private int outOfBoundsRetries;
+        
+        public double stdev() { return stdev; }
+        public int outOfBoundsRetries() { return outOfBoundsRetries; }
+        
+        public GaussianMutator(final VectorMutator parent, final EvolutionState state, final Parameter base, final Parameter def, final String postfix) {
+            super(parent, state, base, def, postfix);
+            assert(state != null);
+            assert(base != null);
+            // If the parent is of this type, inherit its parameters
+            final double defaultStdev = (parent instanceof GaussianMutator) ? ((GaussianMutator)parent).stdev : 0;
+            final int defaultOutOfBoundsRetries = (parent instanceof GaussianMutator) ? ((GaussianMutator)parent).outOfBoundsRetries : DEFAULT_OUT_OF_BOUNDS_RETRIES;
+            stdev = state.parameters.getDoubleWithDefault(base.push(P_STDEV).push(postfix),def.push(P_STDEV).push(postfix), defaultStdev);
+            outOfBoundsRetries = state.parameters.getIntWithDefault(base.push(P_OUTOFBOUNDS_RETRIES).push(postfix), def.push(P_OUTOFBOUNDS_RETRIES).push(postfix), defaultOutOfBoundsRetries);
+            if(outOfBoundsRetries<0)
+                state.output.fatal("Out of bounds retries must be >= 0.", base.push(P_OUTOFBOUNDS_RETRIES).push(postfix), def.push(P_OUTOFBOUNDS_RETRIES).push(postfix));
+            assert(repOK());
+        }
+        
+        @Override
+        public void mutate(final EvolutionState state, final Individual individual, final MersenneTwisterFast random, final int index) {
+            assert(state != null);
+            assert(individual != null);
+            assert(random != null);
+            assert(index > 0);
+            final double oldVal = getGeneValue(individual, index);
+            double val;
+            int outOfBoundsLeftOverTries = outOfBoundsRetries;
+            boolean givingUpAllowed = (outOfBoundsRetries != 0);
+            do
+            {
+                val = random.nextGaussian() * stdev + oldVal;
+                outOfBoundsLeftOverTries--;
+                if (mutationIsBounded() && (val > maxGene || val < minGene))
+                {
+                    if (givingUpAllowed && (outOfBoundsLeftOverTries == 0))
+                    {
+                        val = minGene + random.nextDouble() * (maxGene - minGene);
+                        state.output.warnOnce("The limit of 'out-of-range' retries for gaussian or polynomial mutation (" + outOfBoundsRetries + ") was reached.");
+                        break;
+                    }
+                } 
+                else break;
+            }
+            while (true);
+            setGeneValue(individual, index, val);
+        }
+
+        @Override
+        public String mutationType() {
+            return V_GAUSS_MUTATION;
+        }
+        
+        public final boolean repOK() {
+            return minGene >= 0.0
+                   && maxGene >= minGene
+                    && !Double.isNaN(stdev)
+                    && stdev >= 0.0
+                    && outOfBoundsRetries >= 0;
+        }
+
+        @Override
+        public boolean isIntegerType() { return false; }
+    }
+    
+    /** Stores the parameters and algorithm for the polynomial mutation method. */
+    protected static final class PolynomialMutator extends DoubleVectorMutator {
+        
+        final private int mutationDistributionIndex;
+        final private boolean polynomialIsAlternative;
+        final private int outOfBoundsRetries;
+        
+        public double mutationDistributionIndex() { return mutationDistributionIndex; }
+        public int outOfBoundsRetries() { return outOfBoundsRetries; }
+        public boolean polynomialIsAlternative() { return polynomialIsAlternative; }
+        
+        public PolynomialMutator(final VectorMutator parent, final EvolutionState state, final Parameter base, final Parameter def, final String postfix) {
+            super(parent, state, base, def, postfix);
+            assert(state != null);
+            assert(base != null);
+            // If the parent is of this type, inherit its parameters
+            if (parent instanceof PolynomialMutator) {
+                final PolynomialMutator pParent = (PolynomialMutator)parent;
+                outOfBoundsRetries = state.parameters.getIntWithDefault(base.push(P_OUTOFBOUNDS_RETRIES).push(postfix), def.push(P_OUTOFBOUNDS_RETRIES).push(postfix), pParent.outOfBoundsRetries);
+                mutationDistributionIndex = state.parameters.getIntWithDefault(base.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix), def.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix), pParent.mutationDistributionIndex);
+                polynomialIsAlternative = state.parameters.getBoolean(base.push(P_POLYNOMIAL_ALTERNATIVE).push(postfix), def.push(P_POLYNOMIAL_ALTERNATIVE).push(postfix), pParent.polynomialIsAlternative);
+            }
+            else {
+                outOfBoundsRetries = state.parameters.getIntWithDefault(base.push(P_OUTOFBOUNDS_RETRIES), def.push(P_OUTOFBOUNDS_RETRIES), DEFAULT_OUT_OF_BOUNDS_RETRIES);
+                mutationDistributionIndex = state.parameters.getInt(base.push(P_MUTATION_DISTRIBUTION_INDEX), def.push(P_MUTATION_DISTRIBUTION_INDEX), 0);
+                if (!state.parameters.exists(base.push(P_POLYNOMIAL_ALTERNATIVE), def.push(P_POLYNOMIAL_ALTERNATIVE)))
+                    state.output.warning(String.format("%s is using polynomial mutation as its global mutation type, but '%s' is not defined.  Assuming 'true'", FloatVectorSpecies.class.getSimpleName(), P_POLYNOMIAL_ALTERNATIVE));
+                polynomialIsAlternative = state.parameters.getBoolean(base.push(P_POLYNOMIAL_ALTERNATIVE), def.push(P_POLYNOMIAL_ALTERNATIVE), true);
+            }
+            if(outOfBoundsRetries<0)
+                state.output.fatal("Out of bounds retries must be >= 0.", base.push(P_OUTOFBOUNDS_RETRIES).push(postfix), def.push(P_OUTOFBOUNDS_RETRIES).push(postfix));
+            if (mutationDistributionIndex < 0)
+                state.output.fatal(String.format("If %s is going to use polynomial mutation as its global mutation type, the global distribution index must be defined and >= 0.", FloatVectorSpecies.class.getSimpleName()),
+                    base.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix), def.push(P_MUTATION_DISTRIBUTION_INDEX).push(postfix));
+            
+            assert(repOK());
+        }
+        
+        @Override
+        public void mutate(final EvolutionState state, final Individual individual, final MersenneTwisterFast random, final int index) {
+            assert(state != null);
+            assert(individual != null);
+            assert(random != null);
+            assert(index > 0);
+            final double oldVal = getGeneValue(individual, index);
+
+            double rnd, delta1, delta2, mut_pow, deltaq;
+            double y, yl, yu, val, xy;
+            double y1;
+
+            y1 = y = oldVal;  // ind[index];
+            yl = minGene; // min_realvar[index];
+            yu = maxGene; // max_realvar[index];
+            delta1 = (y-yl)/(yu-yl);
+            delta2 = (yu-y)/(yu-yl);
+
+            int totalTries = outOfBoundsRetries;
+            int tries;
+            for(tries = 0; tries < totalTries || totalTries == 0; tries++)  // keep trying until totalTries is reached if it's not zero.  If it's zero, go on forever.
+                {
+                rnd = random.nextFloat();
+                mut_pow = 1.0/(mutationDistributionIndex+1.0);
+                if (rnd <= 0.5)
+                    {
+                    xy = 1.0-delta1;
+                    val = 2.0*rnd + (polynomialIsAlternative ? (1.0-2.0*rnd)*(Math.pow(xy,(mutationDistributionIndex+1.0))) : 0.0);
+                    deltaq =  Math.pow(val,mut_pow) - 1.0;
+                    }
+                else
+                    {
+                    xy = 1.0-delta2;
+                    val = 2.0*(1.0-rnd) + (polynomialIsAlternative ? 2.0*(rnd-0.5)*(Math.pow(xy,(mutationDistributionIndex+1.0))) : 0.0);
+                    deltaq = 1.0 - (Math.pow(val,mut_pow));
+                    }
+                y1 = y + deltaq*(yu-yl);
+                if (!mutationIsBounded || (y1 >= yl && y1 <= yu)) break;  // yay, found one
+                }
+
+            // at this point, if tries is totalTries, we failed
+            if (totalTries != 0 && tries == totalTries)
+                {
+                // just randomize
+                y1 = (minGene + random.nextFloat(true, true) * (maxGene - minGene));
+                state.output.warnOnce("The limit of 'out-of-range' retries for gaussian or polynomial mutation (" + outOfBoundsRetries + ") was reached.");
+                }
+            setGeneValue(individual, index, y1);
+        }
+
+        @Override
+        public String mutationType() {
+            return V_POLYNOMIAL_MUTATION;
+        }
+        
+        public final boolean repOK() {
+            return minGene >= 0.0
+                   && maxGene >= minGene
+                    && mutationDistributionIndex >= 0
+                    && outOfBoundsRetries >= 0;
+        }
+
+        @Override
+        public boolean isIntegerType() { return false; }
+    }
+    
+    /** Stores the parameters and algorithm for the integer-reset mutation method. */
+    protected static final class IntegerResetMutator extends DoubleVectorMutator {
+        
+        public IntegerResetMutator(final VectorMutator parent, final EvolutionState state, final Parameter base, final Parameter def, final String postfix) {
+            super(parent, state, base, def, postfix);
+            assert(state != null);
+            assert(base != null);
+             assert(repOK());
+        }
+        
+        @Override
+        public void mutate(final EvolutionState state, final Individual individual, final MersenneTwisterFast random, final int index) {
+            assert(state != null);
+            assert(individual != null);
+            assert(random != null);
+            assert(index > 0);
+            final int val = randomValueFromClosedInterval((int) minGene, (int) maxGene, random);
+            setGeneValue(individual, index, val);
+        }
+        
+        private int randomValueFromClosedInterval(final int min, final int max, final MersenneTwisterFast random)
+        {
+            if (max - min < 0) // we had an overflow
+            {
+                int l = 0;
+                do l = random.nextInt();
+                while(l < min || l > max);
+                return l;
+            }
+            else return min + random.nextInt(max - min + 1);
+        }
+
+        @Override
+        public String mutationType() {
+            return V_INTEGER_RESET_MUTATION;
+        }
+        
+        public final boolean repOK() {
+            return minGene >= 0.0
+                   && maxGene >= minGene;
+        }
+
+        @Override
+        public boolean isIntegerType() { return true; }
+    }
+    
     }
