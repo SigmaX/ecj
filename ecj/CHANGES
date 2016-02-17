@@ -1964,7 +1964,7 @@ Version		Change Log
 		<luca.manzoni@disco.unimib.it> as part of http://gpbenchmarks.org/
 	ParameterDatabase.removeDeeply is now deprecated.
 	New sections added to Manual about integration.
-	ec.vector.VectorGene hereby renamed to ec.vector.Vector.  Also the
+	ec.vector.VectorGene hereby renamed to ec.vector.Gene.  Also the
 		default base for ec.vector.VectorGene changed from
 		"vector.vect-gene" to "vector.gene".  
 		ec.vector.Vector.P_VECTOR_GENE made private and deprecated
@@ -2310,7 +2310,7 @@ Version		Change Log
 	SAT now properly loads filenames, not strings, from the parameters
 	spatialcoevolve.params now runs using default subpops
 	Various bugfixes to ecsuite/es.params
-	Changes "muzzle" to "silent" in various params files
+	Changed "muzzle" to "silent" in various params files
 
 23 Ecco la Prerelease!
 	SlaveMonitor.shutdown() now kills all the threads in the thread pool.
@@ -2343,3 +2343,25 @@ Version		Change Log
 	Added threadlocal storage
 	Updated version information
 	Reindented
+	
+24 Watch Out, It's the Prerelease!
+	Fixed an error in Rosenbrock and Noisy Quartic in ecsuite.  
+		Thanks to Sam McKay <smckay2@masonlive.gmu.edu>
+	Modified runComplete everywhere to return a String rather than a
+		boolean.  This is a non-backward-compatible change.  The
+		goal here is for runComplete to provide a REASON for why
+		the run has been completed.  If the run has not been
+		completed, it returns null.
+	Added Evaluator.setRunComplete, which gives the user an ability to
+		request that ECJ quit at its earliest convenience for some
+		reason of the user's choosing (a message is provided).
+	Fixed an error in Lunacek in ecsuite.  Thanks to Sam McKay
+		<smckay2@masonlive.gmu.edu> and Khaled Ahsan Talukder
+		<talukde1@msu.edu>
+	breedthreads and evalthreads must now be > 0
+	Added ec/eda package
+	Added CMAES facility, including cmaes.params in ec/app/ecsuite/
+	Updated MersenneTwister and MersenneTwisterFast to Version 22
+	Revised NSGABreeder to not throw a NullPointerException if the
+		subpopulations have not yet been set.  Thanks to
+		Renzo Massobrio <renzomassobrio@gmail.com>
