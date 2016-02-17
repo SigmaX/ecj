@@ -686,7 +686,7 @@ public class VectorSpecies extends Species
     
     /** Classes of this type store the parameters and algorithm for a mutation method.
      */
-    protected abstract class VectorMutator {
+    protected abstract static class VectorMutator {
         final private double mutationProbability;
         final private int duplicateRetries;
         
