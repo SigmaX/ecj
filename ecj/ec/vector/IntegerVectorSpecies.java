@@ -360,7 +360,10 @@ public class IntegerVectorSpecies extends VectorSpecies
 
         String mtype = state.parameters.getStringWithDefault(base.push(P_MUTATIONTYPE).push(postfix), def.push(P_MUTATIONTYPE).push(postfix), null);
         int mutType = -1;
-        if (mtype == null) { }  // we're cool
+        if (mtype == null) {
+            // No gene-specific mutation type is set, so inherit the global setting
+            mutType = mutationType[index];
+        }
         else if (mtype.equalsIgnoreCase(V_RESET_MUTATION))
             mutType = mutationType[index] = C_RESET_MUTATION; 
         else if (mtype.equalsIgnoreCase(V_RANDOM_WALK_MUTATION))
@@ -383,7 +386,7 @@ public class IntegerVectorSpecies extends VectorSpecies
                         base.push(P_RANDOM_WALK_PROBABILITY).push(postfix), def.push(P_RANDOM_WALK_PROBABILITY).push(postfix));
                 }
             else
-                state.output.error("If IntegerVectorSpecies is going to use polynomial mutation as a per-gene or per-segment type, either the global or per-gene/per-segment random walk mutation probability must be defined.",
+                state.output.error("If IntegerVectorSpecies is going to use random walk mutation as a per-gene or per-segment type, either the global or per-gene/per-segment random walk mutation probability must be defined.",
                     base.push(P_RANDOM_WALK_PROBABILITY).push(postfix), def.push(P_RANDOM_WALK_PROBABILITY).push(postfix));
 
             if (state.parameters.exists(base.push(P_MUTATION_BOUNDED).push(postfix), def.push(P_MUTATION_BOUNDED).push(postfix)))
@@ -391,7 +394,7 @@ public class IntegerVectorSpecies extends VectorSpecies
                 mutationIsBounded[index] = state.parameters.getBoolean(base.push(P_MUTATION_BOUNDED).push(postfix), def.push(P_MUTATION_BOUNDED).push(postfix), true);
                 }
             else if (!mutationIsBoundedDefined)
-                state.output.fatal("If IntegerVectorSpecies is going to use gaussian, polynomial, or integer random walk mutation as a per-gene or per-segment type, the mutation bounding must be defined.",
+                state.output.fatal("If IntegerVectorSpecies is going to use random walk mutation as a per-gene or per-segment type, the mutation bounding must be defined.",
                     base.push(P_MUTATION_BOUNDED).push(postfix), def.push(P_MUTATION_BOUNDED).push(postfix));
 
             }           
